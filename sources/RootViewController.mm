@@ -60,7 +60,7 @@
 // Action เมื่อผู้ใช้แตะปุ่ม Info ขวาบน
 - (void)infoButtonTapped {
     // ดึงคลาสเชื่อมต่อจากฝั่ง Swift เพื่อทำการเปิดหน้า SettingsView (SwiftUI)
-    Class presenterClass = NSClassFromString(@"SettingsViewPresenter");
+    Class presenterClass = NSClassFromString(@"SettingsView");
     if (presenterClass) {
         #pragma clang diagnostic push
         #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
