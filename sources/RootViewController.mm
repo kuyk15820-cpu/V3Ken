@@ -37,23 +37,29 @@
     if (self.navigationController) {
         self.navigationController.navigationBarHidden = NO;
         self.navigationController.navigationBar.barStyle = UIBarStyleBlack;
-        self.navigationController.navigationBar.tintColor = [UIColor systemBlueColor];
+        self.navigationController.navigationBar.tintColor = [UIColor whiteColor];
         
-        // --- เปลี่ยน Title ให้เป็น Style ชิดซ้าย + ป้องกันสตริงด้วย AY_OBFUSCATE ---
-        UILabel *leftTitleLabel = [[UILabel alloc] init];
-        leftTitleLabel.text = [NSString stringWithUTF8String:AY_OBFUSCATE("TT-Tool")];
-        leftTitleLabel.font = [UIFont boldSystemFontOfSize:24.0f]; // ปรับขนาดตัวอักษรให้ใหญ่และหนาตามสไตล์ Left Title
-        leftTitleLabel.textColor = [UIColor labelColor]; // เปลี่ยนตาม Dark/Light Mode อัตโนมัติ
-        [leftTitleLabel sizeToFit]; // ปรับขนาด Label ให้พอดีกับคำว่า TT-Tool
+        // --- เปลี่ยนเป็นสไตล์ Large Title ของระบบ iOS ---
+        self.navigationController.navigationBar.prefersLargeTitles = YES;
+        self.navigationItem.largeTitleDisplayMode = UINavigationItemLargeTitleDisplayModeAutomatic;
+        self.title = [NSString stringWithUTF8String:AY_OBFUSCATE("TT-Tool")];
         
-        UIBarButtonItem *leftTitleItem = [[UIBarButtonItem alloc] initWithCustomView:leftTitleLabel];
-        self.navigationItem.leftBarButtonItem = leftTitleItem;
+        // --- เพิ่มปุ่ม Info ขวาบน ของระบบ ---
+        UIButton *infoButton = [UIButton buttonWithType:UIButtonTypeInfoLight];
+        [infoButton addTarget:self action:@selector(infoButtonTapped) forControlEvents:UIControlEventTouchUpInside];
+        UIBarButtonItem *infoItem = [[UIBarButtonItem alloc] initWithCustomView:infoButton];
+        self.navigationItem.rightBarButtonItem = infoItem;
         // -------------------------------------------------------------------
     }
 
     [self setupData];
     [self setupTableView];
     [self setupSpinner];
+}
+
+// Action เมื่อผู้ใช้แตะปุ่ม Info ขวาบน
+- (void)infoButtonTapped {
+    [self showStatusAlert:[NSString stringWithUTF8String:AY_OBFUSCATE("TT-Tool Version 1.0\nDeveloped with security protection.")]];
 }
 
 - (void)setupData {
@@ -78,7 +84,7 @@
 
 - (void)setupSpinner {
     self.spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleLarge];
-    self.spinner.color = [UIColor systemBlueColor];
+    self.spinner.color = [UIColor whiteColor];
     self.spinner.center = self.view.center;
     self.spinner.hidesWhenStopped = YES;
     [self.view addSubview:self.spinner];
