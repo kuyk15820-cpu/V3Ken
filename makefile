@@ -54,8 +54,6 @@ $(APPLICATION_NAME)_SWIFTFLAGS = -I.
 
 # $(APPLICATION_NAME)_CCFLAGS += -std=c++17 -fno-rtti -DNDEBUG -Wall -Wno-deprecated-declarations -Wno-unused-variable -Wno-unused-value -Wno-unused-function -fvisibility=hidden -IENCRYPT -fbracket-depth=1024
 
-$(APPLICATION_NAME)_CCFLAGS += -std=c++17 -fno-rtti -DNDEBUG -Wall -fvisibility=hidden
-
 # MainApplication.mm_CCFLAGS += -std=c++14
 
 sources/RootViewController.mm_CCFLAGS += -std=c++17 -fno-rtti -DNDEBUG -Wall -fvisibility=hidden
