@@ -72,7 +72,8 @@
 }
 
 - (void)setupTableView {
-    self.tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleInsetGrouped];
+    // เปลี่ยนสไตล์ของตารางเป็น UITableViewStylePlain เพื่อรองรับ Sticky Header (ลอยค้าง)
+    self.tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStylePlain];
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
     self.tableView.backgroundColor = [UIColor systemBackgroundColor];
@@ -135,6 +136,36 @@
     }
     
     return cell;
+}
+
+// Delegate พิเศษสำหรับจัดการเลย์เอาต์การยุบขอบและตัดมุมโค้งให้คงสภาพแบบ Inset Grouped เดิม
+- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
+    // กำหนดระยะเยื้องของขอบด้านข้างเสมือนแบบ Inset Grouped
+    CGFloat margin = 16.0f;
+    CGFloat cornerRadius = 10.0f;
+    
+    CGRect bounds = CGRectInset(cell.bounds, margin, 0);
+    NSInteger numberOfRows = [tableView numberOfRowsInSection:indexPath.section];
+    
+    UIBezierPath *path;
+    if (numberOfRows == 1) {
+        // หากมีเพียงแถวเดียวให้ทำมุมโค้งมนทั้งหมด 4 มุม
+        path = [UIBezierPath bezierPathWithRoundedRect:bounds byRoundingCorners:UIRectCornerAllCorners cornerRadii:CGSizeMake(cornerRadius, cornerRadius)];
+    } else if (indexPath.row == 0) {
+        // แถวแรกโค้งมนเฉพาะมุมด้านบน
+        path = [UIBezierPath bezierPathWithRoundedRect:bounds byRoundingCorners:(UIRectCornerTopLeft | UIRectCornerTopRight) cornerRadii:CGSizeMake(cornerRadius, cornerRadius)];
+    } else if (indexPath.row == numberOfRows - 1) {
+        // แถวสุดท้ายโค้งมนเฉพาะมุมด้านล่าง
+        path = [UIBezierPath bezierPathWithRoundedRect:bounds byRoundingCorners:(UIRectCornerBottomLeft | UIRectCornerBottomRight) cornerRadii:CGSizeMake(cornerRadius, cornerRadius)];
+    } else {
+        // แถวตรงกลางไม่มีมุมโค้งมน
+        path = [UIBezierPath bezierPathWithRect:bounds];
+    }
+    
+    CAShapeLayer *maskLayer = [[CAShapeLayer alloc] init];
+    maskLayer.frame = cell.bounds;
+    maskLayer.path = path.CGPath;
+    cell.layer.mask = maskLayer;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
