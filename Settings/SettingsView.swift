@@ -18,42 +18,18 @@ struct SettingsView: View {
                 Section {
                     VStack(alignment: .leading, spacing: 10) {
                         AppInfoCell(build: "Beta 1")
-                        HStack {
-                            Button {
-                                openURL(URL(string: "https://jailbreak.party/discord")!)
-                            } label: {
-                                ButtonLabel(text: "Discord", icon: "discord", useImage: true)
-                            }
-                            .buttonStyle(TranslucentButtonStyle(color: .discord))
-                            
-                            Button {
-                                openURL(URL(string: "https://github.com/jailbreakdotparty/PancakeStore")!)
-                            } label: {
-                                ButtonLabel(text: "GitHub", icon: "github", useImage: true)
-                            }
-                            .buttonStyle(TranslucentButtonStyle(color: .github))
-                        }
-                        
-                        Button {
-                            openURL(URL(string: "https://jailbreak.party/")!)
-                        } label: {
-                            ButtonLabel(text: "Website", icon: "globe")
-                        }
-                        .buttonStyle(TranslucentButtonStyle())
                     }
                 } header: {
                     HeaderLabel(text: "About", icon: "info.circle")
                 }
                 
                 Section {
-                    LinkCreditCell(image: Image("mineek"), name: "mineek", description: "Original developer of MuffinStore Jailed.", url: "https://github.com/mineek")
-                    LinkCreditCell(image: Image("lunginspector"), name: "lunginspector", description: "Obiliterated the frontend multiple times. Also did some backend fixes.", url: "https://github.com/lunginspector")
-                    LinkCreditCell(image: Image("skadz"), name: "skadz", description: "Three-time authentication fixer, backend work, and project maintainer.", url: "https://github.com/skadz108")
+                    LinkCreditCell(image: Image("mineek"), name: "F1X3R", description: "Developer from TGS Team", url: "tg://user?id=6105731078")
                 } header: {
                     HeaderLabel(text: "Credits", icon: "star")
                 }
             }
-            .navigationTitle("Settings")
+            .navigationTitle("Info")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(action: {
