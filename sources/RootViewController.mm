@@ -72,12 +72,14 @@
 }
 
 - (void)setupTableView {
-    // เปลี่ยนสไตล์ของตารางเป็น UITableViewStylePlain เพื่อรองรับ Sticky Header (ลอยค้าง)
+    // โครงสร้างเป็น Plain แท้ 100% เพื่อให้ Header ลอยค้าง (Sticky) ได้ตามระบบ
     self.tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStylePlain];
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
     self.tableView.backgroundColor = [UIColor systemBackgroundColor];
-    self.tableView.separatorColor = [UIColor separatorColor];
+    
+    // ซ่อนเส้นคั่นตารางเดิมของระบบออกไป (เหมือน .listRowSeparator(.hidden))
+    self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     
     [self.view addSubview:self.tableView];
@@ -101,28 +103,71 @@
     return self.menuItems.count;
 }
 
-- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+// กำหนดความสูงของ Header เพื่อให้มีช่องไฟด้านบนสวยงาม
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
+    return 45.0f;
+}
+
+// ปรับแต่งหน้าตา Header Plain ให้ดูสวยและเยื้องเข้าขอบจอ
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
+    UIView *headerView = [[UIView alloc] init];
+    headerView.backgroundColor = [UIColor systemBackgroundColor]; // พื้นหลังเบลนด์เข้ากับจอ
+    
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(16, 10, tableView.bounds.size.width - 32, 30)];
+    label.font = [UIFont boldSystemFontOfSize:14];
+    label.textColor = [UIColor secondaryLabelColor];
+    
     if (section == 0) {
-        return [NSString stringWithUTF8String:AY_OBFUSCATE("เครื่องมือจัดการวิดีโอ")];
+        label.text = [[NSString stringWithUTF8String:AY_OBFUSCATE("เครื่องมือจัดการวิดีโอ")] uppercaseString];
     }
+    
+    [headerView addSubview:label];
+    return headerView;
+}
+
+// ลบวิธีเก่าออกเพื่อไม่ให้ซ้อนทับกัน
+- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
     return nil;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    static NSString *cellIdentifier = @"DarkCell";
+    static NSString *cellIdentifier = @"PlatterCell";
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
+    
+    // สร้างถาดรอง (Platter View) ประจำตัว Cell
+    UIView *platterView = nil;
     
     if (!cell) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIdentifier];
-        cell.backgroundColor = [UIColor secondarySystemGroupedBackgroundColor]; // สีเทาเข้มหรูหรา
+        
+        // ทำให้ตัวเนื้อ Cell จริงๆ โปร่งใส เพื่อโชว์แผ่นข้างหลัง
+        cell.backgroundColor = [UIColor clearColor];
+        cell.contentView.backgroundColor = [UIColor clearColor];
+        
         cell.textLabel.textColor = [UIColor labelColor];
         cell.textLabel.font = [UIFont boldSystemFontOfSize:16];
         cell.detailTextLabel.textColor = [UIColor secondaryLabelColor];
         cell.detailTextLabel.font = [UIFont systemFontOfSize:12];
         
-        // เอฟเฟกต์การเลือกสีมืด
         cell.selectedBackgroundView = nil;
+        
+        // --- ส่วนการสร้าง Custom Section Platter (ถาดรองสีเทาเข้มหรูหราขอบมน) ---
+        platterView = [[UIView alloc] init];
+        platterView.tag = 999; // กำหนดแท็กไว้เรียกหาตอนอัปเดตขนาด
+        platterView.backgroundColor = [UIColor secondarySystemGroupedBackgroundColor];
+        platterView.layer.cornerRadius = 12.0f; // ความโค้งมนสไตล์ iOS
+        platterView.layer.masksToBounds = YES;
+        
+        // แทรกแผ่นถาดรองไว้ด้านหลังตัวหนังสือทั้งหมด
+        [cell.contentView insertSubview:platterView atIndex:0];
+    } else {
+        platterView = [cell.contentView viewWithTag:999];
     }
+    
+    // คำนวณขนาดและบีบขอบซ้ายขวา (Margin) ให้แผ่น Platter ดูลอยแยกจากขอบจอเสมือน Inset Grouped
+    CGFloat margin = 16.0f;
+    platterView.frame = CGRectMake(margin, 4, tableView.bounds.size.width - (margin * 2), 64 - 8);
+    platterView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     
     NSDictionary *item = self.menuItems[indexPath.row];
     cell.textLabel.text = item[@"title"];
@@ -138,34 +183,16 @@
     return cell;
 }
 
-// Delegate พิเศษสำหรับจัดการเลย์เอาต์การยุบขอบและตัดมุมโค้งให้คงสภาพแบบ Inset Grouped เดิม
+// กำหนดความสูงมาตรฐานให้พอดีกับขนาดถาดรอง
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    return 64.0f;
+}
+
+// ขยับตัวหนังสือด้านในให้อยู่ในขอบเขตของแผ่น Platter สวยงาม
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
-    // กำหนดระยะเยื้องของขอบด้านข้างเสมือนแบบ Inset Grouped
-    CGFloat margin = 16.0f;
-    CGFloat cornerRadius = 10.0f;
-    
-    CGRect bounds = CGRectInset(cell.bounds, margin, 0);
-    NSInteger numberOfRows = [tableView numberOfRowsInSection:indexPath.section];
-    
-    UIBezierPath *path;
-    if (numberOfRows == 1) {
-        // หากมีเพียงแถวเดียวให้ทำมุมโค้งมนทั้งหมด 4 มุม
-        path = [UIBezierPath bezierPathWithRoundedRect:bounds byRoundingCorners:UIRectCornerAllCorners cornerRadii:CGSizeMake(cornerRadius, cornerRadius)];
-    } else if (indexPath.row == 0) {
-        // แถวแรกโค้งมนเฉพาะมุมด้านบน
-        path = [UIBezierPath bezierPathWithRoundedRect:bounds byRoundingCorners:(UIRectCornerTopLeft | UIRectCornerTopRight) cornerRadii:CGSizeMake(cornerRadius, cornerRadius)];
-    } else if (indexPath.row == numberOfRows - 1) {
-        // แถวสุดท้ายโค้งมนเฉพาะมุมด้านล่าง
-        path = [UIBezierPath bezierPathWithRoundedRect:bounds byRoundingCorners:(UIRectCornerBottomLeft | UIRectCornerBottomRight) cornerRadii:CGSizeMake(cornerRadius, cornerRadius)];
-    } else {
-        // แถวตรงกลางไม่มีมุมโค้งมน
-        path = [UIBezierPath bezierPathWithRect:bounds];
-    }
-    
-    CAShapeLayer *maskLayer = [[CAShapeLayer alloc] init];
-    maskLayer.frame = cell.bounds;
-    maskLayer.path = path.CGPath;
-    cell.layer.mask = maskLayer;
+    cell.separatorInset = UIEdgeInsetsMake(0, 32, 0, 32);
+    // ดันเนื้อหาขยับเข้ามาด้านในเล็กน้อยเพื่อให้ไม่ติดขอบถาดรองเกินไป
+    cell.contentView.bounds = CGRectMake(-8, 0, cell.contentView.bounds.size.width, cell.contentView.bounds.size.height);
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
