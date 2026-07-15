@@ -59,7 +59,17 @@
 
 // Action เมื่อผู้ใช้แตะปุ่ม Info ขวาบน
 - (void)infoButtonTapped {
-    [self showStatusAlert:[NSString stringWithUTF8String:AY_OBFUSCATE("TT-Tool Version 1.0\nDeveloped with security protection.")]];
+    // ดึงคลาสเชื่อมต่อจากฝั่ง Swift เพื่อทำการเปิดหน้า SettingsView (SwiftUI)
+    Class presenterClass = NSClassFromString(@"SettingsViewPresenter");
+    if (presenterClass) {
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+        [presenterClass performSelector:@selector(presentSettingsFromViewController:) withObject:self];
+        #pragma clang diagnostic pop
+    } else {
+        // Fallback เผื่อกรณีหาคลาสเชื่อมต่อไม่เจอ ให้แสดง Alert แบบเดิมเพื่อความปลอดภัย
+        [self showStatusAlert:[NSString stringWithUTF8String:AY_OBFUSCATE("TT-Tool Version 1.0\nDeveloped with security protection.")]];
+    }
 }
 
 - (void)setupData {
@@ -72,14 +82,11 @@
 }
 
 - (void)setupTableView {
-    // โครงสร้างเป็น Plain แท้ 100% เพื่อให้ Header ลอยค้าง (Sticky) ได้ตามระบบ
-    self.tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStylePlain];
+    self.tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleInsetGrouped];
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
     self.tableView.backgroundColor = [UIColor systemBackgroundColor];
-    
-    // ซ่อนเส้นคั่นตารางเดิมของระบบออกไป (เหมือน .listRowSeparator(.hidden))
-    self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+    self.tableView.separatorColor = [UIColor separatorColor];
     self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     
     [self.view addSubview:self.tableView];
@@ -103,71 +110,28 @@
     return self.menuItems.count;
 }
 
-// กำหนดความสูงของ Header เพื่อให้มีช่องไฟด้านบนสวยงาม
-- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
-    return 45.0f;
-}
-
-// ปรับแต่งหน้าตา Header Plain ให้ดูสวยและเยื้องเข้าขอบจอ
-- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
-    UIView *headerView = [[UIView alloc] init];
-    headerView.backgroundColor = [UIColor systemBackgroundColor]; // พื้นหลังเบลนด์เข้ากับจอ
-    
-    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(16, 10, tableView.bounds.size.width - 32, 30)];
-    label.font = [UIFont boldSystemFontOfSize:14];
-    label.textColor = [UIColor secondaryLabelColor];
-    
-    if (section == 0) {
-        label.text = [[NSString stringWithUTF8String:AY_OBFUSCATE("เครื่องมือจัดการวิดีโอ")] uppercaseString];
-    }
-    
-    [headerView addSubview:label];
-    return headerView;
-}
-
-// ลบวิธีเก่าออกเพื่อไม่ให้ซ้อนทับกัน
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+    if (section == 0) {
+        return [NSString stringWithUTF8String:AY_OBFUSCATE("เครื่องมือจัดการวิดีโอ")];
+    }
     return nil;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    static NSString *cellIdentifier = @"PlatterCell";
+    static NSString *cellIdentifier = @"DarkCell";
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
-    
-    // สร้างถาดรอง (Platter View) ประจำตัว Cell
-    UIView *platterView = nil;
     
     if (!cell) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIdentifier];
-        
-        // ทำให้ตัวเนื้อ Cell จริงๆ โปร่งใส เพื่อโชว์แผ่นข้างหลัง
-        cell.backgroundColor = [UIColor clearColor];
-        cell.contentView.backgroundColor = [UIColor clearColor];
-        
+        cell.backgroundColor = [UIColor secondarySystemGroupedBackgroundColor]; // สีเทาเข้มหรูหรา
         cell.textLabel.textColor = [UIColor labelColor];
         cell.textLabel.font = [UIFont boldSystemFontOfSize:16];
         cell.detailTextLabel.textColor = [UIColor secondaryLabelColor];
         cell.detailTextLabel.font = [UIFont systemFontOfSize:12];
         
+        // เอฟเฟกต์การเลือกสีมืด
         cell.selectedBackgroundView = nil;
-        
-        // --- ส่วนการสร้าง Custom Section Platter (ถาดรองสีเทาเข้มหรูหราขอบมน) ---
-        platterView = [[UIView alloc] init];
-        platterView.tag = 999; // กำหนดแท็กไว้เรียกหาตอนอัปเดตขนาด
-        platterView.backgroundColor = [UIColor secondarySystemGroupedBackgroundColor];
-        platterView.layer.cornerRadius = 12.0f; // ความโค้งมนสไตล์ iOS
-        platterView.layer.masksToBounds = YES;
-        
-        // แทรกแผ่นถาดรองไว้ด้านหลังตัวหนังสือทั้งหมด
-        [cell.contentView insertSubview:platterView atIndex:0];
-    } else {
-        platterView = [cell.contentView viewWithTag:999];
     }
-    
-    // คำนวณขนาดและบีบขอบซ้ายขวา (Margin) ให้แผ่น Platter ดูลอยแยกจากขอบจอเสมือน Inset Grouped
-    CGFloat margin = 16.0f;
-    platterView.frame = CGRectMake(margin, 4, tableView.bounds.size.width - (margin * 2), 64 - 8);
-    platterView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     
     NSDictionary *item = self.menuItems[indexPath.row];
     cell.textLabel.text = item[@"title"];
@@ -181,18 +145,6 @@
     }
     
     return cell;
-}
-
-// กำหนดความสูงมาตรฐานให้พอดีกับขนาดถาดรอง
-- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return 64.0f;
-}
-
-// ขยับตัวหนังสือด้านในให้อยู่ในขอบเขตของแผ่น Platter สวยงาม
-- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
-    cell.separatorInset = UIEdgeInsetsMake(0, 32, 0, 32);
-    // ดันเนื้อหาขยับเข้ามาด้านในเล็กน้อยเพื่อให้ไม่ติดขอบถาดรองเกินไป
-    cell.contentView.bounds = CGRectMake(-8, 0, cell.contentView.bounds.size.width, cell.contentView.bounds.size.height);
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
